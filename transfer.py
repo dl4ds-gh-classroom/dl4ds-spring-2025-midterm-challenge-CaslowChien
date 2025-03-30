@@ -110,7 +110,6 @@ def main():
     CONFIG = {
         "model": "MyModel",   # Change name when using a different model
         "batch_size": 256, # run batch size finder to find optimal batch size
-        "initial_lr": 3e-4,
         "epochs": 50,  # Train for longer in a real scenario
         "num_workers": 4, # Adjust based on your system
         "device": "cuda",

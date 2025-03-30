@@ -29,8 +29,9 @@ I also used ChatGPT to refine the wording in this report.
 ```python
 batch_size = 256
 learning_rate = 3e-4
-optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=5e-4)
-scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3, verbose=True)
+epoch = 50
+optimizer = create_optimizer_v2(model.parameters(), opt = "adamw", lr = 3e-4, weight_decay = 1e-2, momentum = 0.9)
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.3, patience=3, threshold=1e-3, threshold_mode='rel', verbose=True)
 ```
 
 ### Search Process & Reason
@@ -43,7 +44,7 @@ scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3, ver
 ---
 
 ## Regularization Techniques
-- **Weight Decay:** `weight_decay=5e-4` in the Adam optimizer applies L2 regularization, which discourages large weights and helps prevent overfitting.
+- **Weight Decay:** `weight_decay=1e-2` in the Adam optimizer applies L2 regularization, which discourages large weights and helps prevent overfitting.
 
 ---
 
@@ -143,7 +144,7 @@ All Improved Training:
 The Best Model:
 ![wandb best model part 1](https://github.com/dl4ds-gh-classroom/dl4ds-spring-2025-midterm-challenge-CaslowChien/blob/main/assets/wandb_best_part1.png?raw=true)
 
-![Link to best model part 1](https://github.com/dl4ds-gh-classroom/dl4ds-spring-2025-midterm-challenge-CaslowChien/blob/main/simple_cnn.py)
+[Link to best model part 1](https://github.com/dl4ds-gh-classroom/dl4ds-spring-2025-midterm-challenge-CaslowChien/blob/main/simple_cnn.py)
 
 ### PART 2
 The Best Model:
