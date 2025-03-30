@@ -11,6 +11,13 @@ from tqdm.auto import tqdm  # For progress bars
 import wandb
 import json
 import torchvision.models as models
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torchvision.transforms import AutoAugment, AutoAugmentPolicy
+from torch.utils.data import ConcatDataset
+import torch.nn.functional as F
+from timm.optim import create_optimizer_v2
+from torch.optim.lr_scheduler import CosineAnnealingLR
+
 
 ################################################################################
 # Model Definition (Simple Example - You need to complete)
@@ -21,6 +28,7 @@ import torchvision.models as models
 ################################################################################
 # Define a one epoch training function
 ################################################################################
+
 def train(epoch, model, trainloader, optimizer, criterion, CONFIG):
     """Train one epoch, e.g. all batches of one epoch."""
     device = CONFIG["device"]
@@ -101,8 +109,8 @@ def main():
 
     CONFIG = {
         "model": "MyModel",   # Change name when using a different model
-        "batch_size": 128, # run batch size finder to find optimal batch size
-        "learning_rate": 0.1,
+        "batch_size": 256, # run batch size finder to find optimal batch size
+        "initial_lr": 3e-4,
         "epochs": 50,  # Train for longer in a real scenario
         "num_workers": 4, # Adjust based on your system
         "device": "cuda",
@@ -116,11 +124,13 @@ def main():
     print("\nCONFIG Dictionary:")
     pprint.pprint(CONFIG)
 
+    torch.manual_seed(CONFIG['seed'])
+
     ############################################################################
     #      Data Transformation (Example - You might want to modify) 
     ############################################################################
 
-    transform_train = transforms.Compose([
+    transform_train = transforms.Compose([ 
     transforms.RandomCrop(32, padding=4),  # Data augmentation
     transforms.RandomHorizontalFlip(),      # Data augmentation
     transforms.ToTensor(),
@@ -143,9 +153,48 @@ def main():
     #       Data Loading
     ############################################################################
 
-    trainset = torchvision.datasets.CIFAR100(root='./data', train=True,
+    transform_0 = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761]),
+    transforms.Lambda(lambda x: x + torch.randn_like(x) * 0.025),
+    transforms.Lambda(lambda x: x + 0.1),  # Shifting all values slightly
+    transforms.Lambda(lambda x: F.avg_pool2d(x.unsqueeze(0), kernel_size=3, stride=1, padding=1).squeeze(0))
+    ])
+
+    transform_1 = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761]),
+    transforms.Lambda(lambda x: x + torch.randn_like(x) * 0.05),
+    transforms.Lambda(lambda x: x + 0.1),  # Shifting all values slightly
+    transforms.Lambda(lambda x: F.avg_pool2d(x.unsqueeze(0), kernel_size=3, stride=1, padding=1).squeeze(0))
+    ])
+
+    transform_2 = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761]),
+    transforms.Lambda(lambda x: x + torch.randn_like(x) * 0.075),
+    transforms.Lambda(lambda x: x + 0.1),  # Shifting all values slightly
+    transforms.Lambda(lambda x: F.avg_pool2d(x.unsqueeze(0), kernel_size=3, stride=1, padding=1).squeeze(0))
+    ])
+
+    transform_3 = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761]),
+    transforms.Lambda(lambda x: x + torch.randn_like(x) * 0.1),
+    transforms.Lambda(lambda x: x + 0.1),  # Shifting all values slightly
+    transforms.Lambda(lambda x: F.avg_pool2d(x.unsqueeze(0), kernel_size=3, stride=1, padding=1).squeeze(0))
+    ])
+
+    trainset_0 = torchvision.datasets.CIFAR100(root='./data', train=True, transform=transform_0, download=False)
+    trainset_1 = torchvision.datasets.CIFAR100(root='./data', train=True, transform=transform_1, download=False)
+    trainset_2 = torchvision.datasets.CIFAR100(root='./data', train=True, transform=transform_2, download=False)
+    trainset_3 = torchvision.datasets.CIFAR100(root='./data', train=True, transform=transform_3, download=False)
+    trainset_4 = torchvision.datasets.CIFAR100(root='./data', train=True,
                                             download=False, transform=transform_train)
 
+    trainset = ConcatDataset([trainset_0, trainset_1, trainset_2, trainset_3, trainset_4])
+                                            
+    # note: there are data leakage in validation set
     # Split train into train and validation (80/20 split)
     train_size = int(0.8 * len(trainset))  # 80% for training
     val_size = len(trainset) - train_size  # 20% for validation
@@ -159,8 +208,9 @@ def main():
     ############################################################################
     #   Instantiate model and move to target device
     ############################################################################
-    model = torch.hub.load('pytorch/vision:v0.10.0', 'resnext50_32x4d', pretrained=True)
-    model.fc = nn.Linear(model.fc.in_features, 100)  # Adjust output layer for CIFAR-100
+    # model = torch.hub.load('pytorch/vision:v0.10.0', 'resnext50_32x4d', pretrained=True)
+    model = models.convnext_base(pretrained=True)
+    # model.fc = nn.Linear(model.fc.in_features, 100)  # Adjust output layer for CIFAR-100
     model = model.to(CONFIG["device"])
 
     print("\nModel summary:")
@@ -182,12 +232,16 @@ def main():
     # Loss Function, Optimizer and optional learning rate scheduler
     ############################################################################
     criterion = nn.CrossEntropyLoss()  # For multi-class classification
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    # optimizer = optim.Adam(model.parameters(), lr=0.001) - misty-night-24
+    # optimizer = optim.Adam(model.parameters(), lr=3e-4, weight_decay=5e-4) - grateful-dream-54
+    optimizer = create_optimizer_v2(model.parameters(), opt = "adamw", lr = 3e-4, weight_decay = 1e-2, momentum = 0.9)
     
     # Optionally, use a learning rate scheduler
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50) - hearty-night-22
     # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1) - stilted-valley-21
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50, eta_min=1e-5) - major-deluge-29
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.3, patience=3, threshold=1e-3, threshold_mode='rel', verbose=True)
 
     # Initialize wandb
     wandb.init(project="-sp25-ds542-challenge", config=CONFIG)
@@ -201,7 +255,7 @@ def main():
     for epoch in range(CONFIG["epochs"]):
         train_loss, train_acc = train(epoch, model, trainloader, optimizer, criterion, CONFIG)
         val_loss, val_acc = validate(model, valloader, criterion, CONFIG["device"])
-        scheduler.step()
+        scheduler.step(val_loss)
 
         # log to WandB
         wandb.log({

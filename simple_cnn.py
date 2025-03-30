@@ -10,6 +10,9 @@ import pandas as pd
 from tqdm.auto import tqdm  # For progress bars
 import wandb
 import json
+import torchvision.models as models
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torchvision.transforms import AutoAugment, AutoAugmentPolicy
 
 ################################################################################
 # Model Definition (Simple Example - You need to complete)
@@ -17,35 +20,6 @@ import json
 # For Part 2 you have the option of using a predefined network and
 # for Part 3 you have the option of using a predefined, pretrained network to
 # finetune.
-################################################################################
-class SimpleCNN(nn.Module):
-    def __init__(self):
-        super(SimpleCNN, self).__init__()
-        # Define the layers of the network
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-        
-        # Compute the output size after convolutions and pooling
-        # Assuming the input image size is (3, 32, 32) (CIFAR-100)
-        self.fc1 = nn.Linear(128 * 4 * 4, 512)  # Adjusted for correct size after pooling
-        self.fc2 = nn.Linear(512, 100)  # CIFAR100 has 100 classes
-    
-    def forward(self, x):
-        # Define the forward pass
-        x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2(x), 2))
-        x = F.relu(F.max_pool2d(self.conv3(x), 2))
-        
-        # Flatten the tensor for fully connected layer
-        x = x.view(x.size(0), -1)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
-# Try: 
-# no max pool
-# add normalization
-
 ################################################################################
 # Define a one epoch training function
 ################################################################################
@@ -129,9 +103,9 @@ def main():
 
     CONFIG = {
         "model": "MyModel",   # Change name when using a different model
-        "batch_size": 128, # run batch size finder to find optimal batch size
+        "batch_size": 256, # run batch size finder to find optimal batch size
         "learning_rate": 0.1,
-        "epochs": 5,  # Train for longer in a real scenario
+        "epochs": 50,  # Train for longer in a real scenario
         "num_workers": 4, # Adjust based on your system
         "device": "cuda",
         "data_dir": "./data",  # Make sure this directory exists
@@ -148,9 +122,11 @@ def main():
     #      Data Transformation (Example - You might want to modify) 
     ############################################################################
 
-    transform_train = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    transform_train = transforms.Compose([ 
+    transforms.RandomCrop(32, padding=4),  # Data augmentation
+    transforms.RandomHorizontalFlip(),      # Data augmentation
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])  # CIFAR-100 normalization
     ])
     # add flip, horizontal, rotation
 
@@ -160,8 +136,8 @@ def main():
 
     # Validation and test transforms (NO augmentation)
     transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])  # CIFAR-100 normalization
     ])
 
 
@@ -185,7 +161,9 @@ def main():
     ############################################################################
     #   Instantiate model and move to target device
     ############################################################################
-    model = SimpleCNN()
+    # model = torch.hub.load('pytorch/vision:v0.10.0', 'resnext50_32x4d', pretrained=True)
+    model = models.convnext_base(pretrained=True)
+    # model.fc = nn.Linear(model.fc.in_features, 100)  # Adjust output layer for CIFAR-100
     model = model.to(CONFIG["device"])
 
     print("\nModel summary:")
@@ -207,10 +185,15 @@ def main():
     # Loss Function, Optimizer and optional learning rate scheduler
     ############################################################################
     criterion = nn.CrossEntropyLoss()  # For multi-class classification
-    optimizer = optim.SGD(model.parameters(), lr=CONFIG["learning_rate"], momentum=0.9)
-
+    # optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=3e-2, weight_decay=1e-5)
+    
     # Optionally, use a learning rate scheduler
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50) - hearty-night-22
+    # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1) - stilted-valley-21
+    # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50, eta_min=1e-5) - major-deluge-29
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3, verbose=True)
 
     # Initialize wandb
     wandb.init(project="-sp25-ds542-challenge", config=CONFIG)
@@ -224,7 +207,7 @@ def main():
     for epoch in range(CONFIG["epochs"]):
         train_loss, train_acc = train(epoch, model, trainloader, optimizer, criterion, CONFIG)
         val_loss, val_acc = validate(model, valloader, criterion, CONFIG["device"])
-        scheduler.step()
+        scheduler.step(val_loss)
 
         # log to WandB
         wandb.log({
