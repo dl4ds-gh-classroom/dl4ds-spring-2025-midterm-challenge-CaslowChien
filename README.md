@@ -1,6 +1,32 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/xnB1OI0j)
 # DS542 Deep Learning for Data Science -- Spring 2025 Midterm Challenge
 
+## Repository Structure
+```
+.
+├── .github/                  # GitHub-specific files
+├── assets/                   # Training curves and distortion visualization images
+│   ├── distortion00_severity_max.png	# screen shot example of severity max distortion 
+│   ├── distortion00_severity_min.png	# screen shot example of severity min distortion 
+│   ├── distortion02_severity_min.png	# screen shot example of severity min distortion for another batch of png 
+│   ├── wandb_all.png	# screen shot of "all" training evaluation in wandb
+│   ├── wandb_best.png	# screen shot of "the best(part 3)" training evaluation in wandb
+│   ├── wandb_best_part1.png	# screen shot of "part 1" training evaluation in wandb
+│   └── wandb_best_part2.png	# screen shot of "part 2" training evaluation in wandb
+├── .gitignore                 # Specifies data and others files to ignore in Git
+├── README.md                  # Project overview and instructions
+├── Report.md                  # Detailed report about methods and results (this file)
+├── requirements.txt           # Python package requirements
+├── starter_code.py            # Sample starter code for Part 1
+├── utils.py                   # Utility functions (e.g., data loading, preprocessing)
+├── vis.py                     # Visualization code with distorted images
+├── vis_original.py            # Visualization code for original (undistorted) images
+├── eval_cifar100.py           # Script to evaluate models on CIFAR-100 dataset
+├── eval_ood.py                # Script to evaluate models on OOD test images
+├── part1_simple_cnn.py        # Part 1: Simple CNN model training
+├── part2_cnn.py               # Part 2: Advanced CNN models training
+├── part3_transfer.py          # Part 3: Transfer learning implementation
+
 ## Overview
 
 This repository contains the code for the midterm challenge of the course DS542 Deep Learning for Data Science.
