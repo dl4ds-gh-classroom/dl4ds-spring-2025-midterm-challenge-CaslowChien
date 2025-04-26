@@ -10,26 +10,31 @@ For hyperparameter tuning, I provided ChatGPT with training and validation loss 
 I also used ChatGPT to refine the wording in this report.
 
 ## Repository Structure
+```
 .
-├── .github/               # GitHub-specific files (e.g., Classroom Feedback)
-├── assets/               # Reports, figures, and final code
-├── data/                # Dataset directory (CIFAR-100 and OOD test images)
-│   ├── cifar-100-python/ # CIFAR-100 dataset files
-│   └── ood-test/         # Out-of-distribution test images for evaluation
-├── .gitignore           # Specifies intentionally untracked files to ignore
-├── README.md           # Project overview and instructions
-├── Report.md           # Detailed project report
-├── requirements.txt     # Python dependencies
-├── starter_code.py      # Sample starter code for initial setup
-├── utils.py            # Utility functions (data processing, etc.)
-├── vis.py             # Visualization code (AI reference)
-├── vis_original.py     # Visualization of original images without distortion
-├── eval_cifar100.py     # Evaluation script for CIFAR-100 dataset
-├── eval_ood.py         # Evaluation script for out-of-distribution data
-├── part1_simple_cnn.py  # Part 1: Simple CNN implementation and training
-├── part2_cnn.py         # Part 2: Advanced CNN models and training
-├── part3_transfer.py    # Part 3: Transfer learning implementation and fine-tuning
-
+├── .github/                  # GitHub-specific files
+├── assets/                   # Training curves and distortion visualization images
+│   ├── distortion00_severity_max.png	# screen shot example of severity max distortion 
+│   ├── distortion00_severity_min.png	# screen shot example of severity min distortion 
+│   ├── distortion02_severity_min.png	# screen shot example of severity min distortion for another batch of png 
+│   ├── wandb_all.png	# screen shot of "all" training evaluation in wandb
+│   ├── wandb_best.png	# screen shot of "the best(part 3)" training evaluation in wandb
+│   ├── wandb_best_part1.png	# screen shot of "part 1" training evaluation in wandb
+│   └── wandb_best_part2.png	# screen shot of "part 2" training evaluation in wandb
+├── .gitignore                 # Specifies data and others files to ignore in Git
+├── README.md                  # Project overview and instructions
+├── Report.md                  # Detailed report about methods and results (this file)
+├── requirements.txt           # Python package requirements
+├── starter_code.py            # Sample starter code for Part 1
+├── utils.py                   # Utility functions (e.g., data loading, preprocessing)
+├── vis.py                     # Visualization code with distorted images
+├── vis_original.py            # Visualization code for original (undistorted) images
+├── eval_cifar100.py           # Script to evaluate models on CIFAR-100 dataset
+├── eval_ood.py                # Script to evaluate models on OOD test images
+├── part1_simple_cnn.py        # Part 1: Simple CNN model training
+├── part2_cnn.py               # Part 2: Advanced CNN models training
+├── part3_transfer.py          # Part 3: Transfer learning implementation
+```
 
 
 ---
