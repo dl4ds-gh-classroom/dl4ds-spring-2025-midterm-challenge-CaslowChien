@@ -9,6 +9,29 @@ I selected and tuned hyperparameters, including learning rate, epochs, data augm
 For hyperparameter tuning, I provided ChatGPT with training and validation loss screenshots when I needed additional insights.
 I also used ChatGPT to refine the wording in this report.
 
+## Repository Structure
+.
+├── .github/               # GitHub-specific files (e.g., Classroom Feedback)
+├── assets/               # Reports, figures, and final code
+├── data/                # Dataset directory (CIFAR-100 and OOD test images)
+│   ├── cifar-100-python/ # CIFAR-100 dataset files
+│   └── ood-test/         # Out-of-distribution test images for evaluation
+├── .gitignore           # Specifies intentionally untracked files to ignore
+├── README.md           # Project overview and instructions
+├── Report.md           # Detailed project report
+├── requirements.txt     # Python dependencies
+├── starter_code.py      # Sample starter code for initial setup
+├── utils.py            # Utility functions (data processing, etc.)
+├── vis.py             # Visualization code (AI reference)
+├── vis_original.py     # Visualization of original images without distortion
+├── eval_cifar100.py     # Evaluation script for CIFAR-100 dataset
+├── eval_ood.py         # Evaluation script for out-of-distribution data
+├── part1_simple_cnn.py  # Part 1: Simple CNN implementation and training
+├── part2_cnn.py         # Part 2: Advanced CNN models and training
+├── part3_transfer.py    # Part 3: Transfer learning implementation and fine-tuning
+
+
+
 ---
 
 ## Model Description
